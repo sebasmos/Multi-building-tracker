@@ -33,8 +33,25 @@ I. Download Data and Create Environment
         cd /path_to_baseline/
         git clone https://github...
  
- 
-3. Build and launch the docker container, which relies upon [Solaris](https://solaris.readthedocs.io/en/latest/) (a GPU-enabled machine and [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) are recommended):
+3. Instead (It worked like this in Ubuntu 20.10): 
+Install anaconda https://docs.anaconda.com/anaconda/install/linux/ 
+Install solaris: https://solaris.readthedocs.io/en/latest/installation.html 
+Install Nvidia-docker https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html  
+Install docker: https://docs.docker.com/get-docker/  
+
+After this, follow the next command to create a new environment called "Solaris" in ANaconda:
+
+git clone https://github.com/cosmiq/solaris.git
+cd solaris
+conda env create -f environment-gpu.ymlv
+
+conda activate solaris
+pip install .
+
+From console, always activate this option manually through``` conda activate solaris ``` or manually tipe ```anaconda-navigator``` from terminal and change ```root``` to ```solaris```, install Jupyter in this environment +  requirements.txt using ```pip install -y requirements.txt```. 
+
+
+5. (OPTIONAL, for me this is not necesary if you have 1 GPU - Intel) Build and launch the docker container, which relies upon [Solaris](https://solaris.readthedocs.io/en/latest/) (a GPU-enabled machine and [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) are recommended):
 
         nvidia-docker build -t sn7_baseline_image /path_to_baseline/docker 
         NV_GPU=0 nvidia-docker run -it -v /local_data:/local_data  -ti --ipc=host --name sn7_gpu0 sn7_baseline_image
