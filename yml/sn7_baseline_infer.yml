@@ -25,7 +25,7 @@ data_specs:
 
 training_data_csv:
 validation_data_csv:
-inference_data_csv: '/local_data/sn7/aws_download/csvs/sn7_baseline_test_public_df.csv'
+inference_data_csv: '/home/sebasmos/Documentos/TRDP/DATASET/SN7_buildings_train/csvs/sn7_baseline_test_public_df.csv'
 
 training_augmentation:
   augmentations:

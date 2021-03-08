@@ -23,7 +23,7 @@ data_specs:
   val_holdout_frac: 0.1
   data_workers:
 
-training_data_csv: '/local_data/sn7/aws_download/csvs/sn7_baseline_train_df.csv'
+training_data_csv: '/home/sebasmos/Documentos/TRDP/DATASET/SN7_buildings_train/csvs/sn7_baseline_train_df.csv'
 validation_data_csv:
 inference_data_csv:
 
