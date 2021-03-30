@@ -101,3 +101,62 @@ Output will consist of:
 <img src="docs/figs/footprints_matched.png" height="400" alt="Header">
 </p>
 
+
+## Paper Spacenet 7
+
+### Evaluation metrix 
+
+SCOT : spacenet change and object tracking
+
+‌       1. Tracking term
+        
+        Ability to measure whether the building stays the same over time.
+        Evaluates the IOU between different buildings with its corresponding ID, from months to months
+        * Penalizes incorrect ids across time (mismatch)
+
+        Mismatch (mm): if one ID has been assignto another ID proposal more than once recently 
+                
+        Mismatches are not counted as TP. Each mismatch decreases TP by one. This effectively divorces the ground truth footprint from its mismatched proposal footprint, creating an additional false negative and an additional false positive
+        
+        `tp -> tp - mm`
+        `fp -> fp + mm`
+        `fn -> fn + mm`
+‌       
+       2. Change detection term 
+        Detects whether there is a change on the picture. New buildings, missed ones (?)  This is the term that identifies new buildings detection or construction. 
+        . That is, ground truth or proposal footprints with identifier numbers making their first chronological appearance.
+        It will be zero because there are no new proposals after the first month (which is ignored) even for small new constructions
+        
+        COmparing with MOTA: “MOTA scores are mathematically unbounded, making them less intuitively interpretable for challenging low-score scenarios, and sometimes even yielding negative scores.” [1]
+        Since under-standing time-dependence is usually a primary purpose of time series data, this is a serious drawback. SCOT’s change
+        detection term prevents this. In fact, many such approaches to “gaming” the SCOT metric by artificially increasing one
+        term will decrease the other term 
+        
+        
+Idea: match footprint GT vs month to month footprint. 
+There is match if iou <= 0.25 (comes from imagenet)
+
+The idea of using these 2 terms of generalize the f1 score over time series. 
+
+*Multiple Object Tracking Accuracy (MOTA) metric*: Yield negative scores. This is the reason why we are using SCOt metric, because MOTA does not have time dependence, and this can be really unuseful for time series data
+
+The idea of using these 2 terms of generalize the f1 score over time series 
+
+
+While the coarser the building positions, the better the prediction. While if they are clustered together, it will be worst.  Buildings with more than 4pxs squared are evaluated, with around 4 m area 
+
+‌SCOT will yield bad results if there is not good overlap, so that's why for clustered regions it is very complicated to good results, and may be crossed IOU, which creates mismatches and those are penalized
+‌despite of adding multiple imagery for representing the time component on training set, future and past generations. This however could be useful for implementing LSTM or RNN models. 
+‌no SCOTT score differences between vgg16 & efficientnet
+
+
+MUDS dataset = spacenet dataset 
+ond its relevance for disaster response, disease preparedness, and environmental monitoring, time series analysis of satellite imagery poses unique technical challenges often unaddressed by existing methods.
+
+Tutorials AWS:https://registry.opendata.aws/spacenet/
+
+https://aws.amazon.com/es/blogs/machine-learning/extracting-buildings-and-roads-from-aws-open-data-using-amazon-sagemaker/ 
+ 
+https://medium.com/the-downlinq/getting-started-with-spacenet-data-827fd2ec9f53
+
+https://medium.com/the-downlinq/announcing-solaris-an-open-source-python-library-for-analyzing-overhead-imagery-with-machine-48c1489c29f7
