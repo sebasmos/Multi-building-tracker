@@ -154,7 +154,7 @@ Results showed that:
 
 1. **Augmentation strategies**: Flipping or rotating worsen results because of distorted images and inplaced labeling (shattered by shadows). Then, algorithms need to know the right labeling positions
 
-2. **Loss functions**: Combination of Dice coefficient + Focal loss yielded best results than Jaccard. (top 2 competitors [Focal loss] (https://arxiv.org/abs/1708.02002)) which is basically a binary cross-entropy variant that penalizes low-confidence predictions more strongly. These loss functions combined with the competitors’ advanced segmentation objective masks yielded high-fidelity building footprint extraction.
+2. **Loss functions**: Combination of Dice coefficient + Focal loss yielded best results than Jaccard. (top 2 competitors [Focal loss](https://arxiv.org/abs/1708.02002)) which is basically a binary cross-entropy variant that penalizes low-confidence predictions more strongly. These loss functions combined with the competitors’ advanced segmentation objective masks yielded high-fidelity building footprint extraction.
 
 3. **Objective masks**: NN for segmentation create 0-1 prob masks (*semantig segmentation*), but Spacenets asks additionally for *instance segmentation task*, which is creating polygons labeling, what this means is that the crafted polygons must fit accurately or in consistent shapes into the Ground Truth footprints. The winners solution in this case proposed using 3 channel join method: Each color corresponds to a different objective mask channel. Blue marks building footprints; pink outlines the buildings; green denotes points where buildings are closely juxtaposed.
 
