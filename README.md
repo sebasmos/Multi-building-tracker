@@ -152,9 +152,23 @@ ond its relevance for disaster response, disease preparedness, and environmental
 
 Results showed that:
 
-1. Augmentation strategies: Flipping or rotating worsen results because of distorted images and inplaced labeling (shattered by shadows). Then, algorithms need to know the right labeling positions
+1. **Augmentation strategies**: Flipping or rotating worsen results because of distorted images and inplaced labeling (shattered by shadows). Then, algorithms need to know the right labeling positions
 
-2. Loss functions: Combination of Dice coefficient + Focal loss yielded best results than Jaccard. (top 2 competitors [Focal loss] (https://arxiv.org/abs/1708.02002)) which is basically a binary cross-entropy variant that penalizes low-confidence predictions more strongly. 
+2. **Loss functions**: Combination of Dice coefficient + Focal loss yielded best results than Jaccard. (top 2 competitors [Focal loss] (https://arxiv.org/abs/1708.02002)) which is basically a binary cross-entropy variant that penalizes low-confidence predictions more strongly. These loss functions combined with the competitors’ advanced segmentation objective masks yielded high-fidelity building footprint extraction.
+
+3. **Objective masks**: NN for segmentation create 0-1 prob masks (*semantig segmentation*), but Spacenets asks additionally for *instance segmentation task*, which is creating polygons labeling, what this means is that the crafted polygons must fit accurately or in consistent shapes into the Ground Truth footprints. The winners solution in this case proposed using 3 channel join method: Each color corresponds to a different objective mask channel. Blue marks building footprints; pink outlines the buildings; green denotes points where buildings are closely juxtaposed.
+
+**Conclusions of Spacenet 4**: Competitors used their loss functions, learning objectives, and augmentation strategy to address the unique challenges posed by the SpaceNet Off-Nadir Buildings Challenge task and data. They cut common image augmentations (rotation and flipping) from their pipeline so their algorithms could learn offset. They used loss functions optimized for a low foreground-to-background class ratio to ensure algorithms learned to find the relatively uncommon building pixels. Finally, they used advanced learning objectives to effectively separate buildings for this instance segmentation task
+
+
+
+
+
+### Modeling Architecture walkthrough XD_XD
+
+1. Neural net architectures: Semantic segmentation with U-net and VGG16 encoder (pre-trained on Imagenet), which builds an *effective building footprint detection model*
+
+U-net: Originally developed for biomedicine and uses upsampling technique instead of pooling and consits of a encoder and a decoder, so XD_XD replaces the encoder by the VGG16 and the decoder remains as the u-net. **Training time: 7 days**.
 
 
 **Tutorials**: AWS:https://registry.opendata.aws/spacenet/
@@ -165,4 +179,25 @@ https://medium.com/the-downlinq/getting-started-with-spacenet-data-827fd2ec9f53
 
 https://medium.com/the-downlinq/announcing-solaris-an-open-source-python-library-for-analyzing-overhead-imagery-with-machine-48c1489c29f7
 
+to check:
+https://medium.com/the-downlinq/you-only-look-twice-multi-scale-object-detection-in-satellite-imagery-with-convolutional-neural-38dad1cf7571
+
+one of the competitors winners won the 1m dollars deep face
+https://www.kaggle.com/c/deepfake-detection-challenge
+
+spacenet winners
+
+https://medium.com/the-downlinq/spacenet-7-results-arxiv-paper-and-winning-model-release-8da36df16aa5
+
+### NOTES
+
+Next Spacenet challenge owner: https://www.maxar.com/ 
+
+How to build a custom baseline model https://solaris.readthedocs.io/en/latest/tutorials/notebooks/api_training_spacenet.html
+
+About solaris toolkit:
+https://www.linkedin.com/in/roshanr11/
+
+
+[Roshan11](https://github.com/roshanr11?tab=repositories) 
 
