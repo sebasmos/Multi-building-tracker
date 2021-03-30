@@ -148,7 +148,7 @@ The idea of using these 2 terms (change and tracking terms) generalizes the F1 s
 MUDS dataset = spacenet dataset 
 ond its relevance for disaster response, disease preparedness, and environmental monitoring, time series analysis of satellite imagery poses unique technical challenges often unaddressed by existing methods.
 
-### Spacenet 4 [Ref] (https://medium.com/the-downlinq/a-deep-dive-into-the-spacenet-4-winning-algorithms-8d611a5dfe25)
+### Spacenet 4 <a href="https://medium.com/the-downlinq/a-deep-dive-into-the-spacenet-4-winning-algorithms-8d611a5dfe25">[Ref]</a> 
 
 Results showed that:
 
@@ -171,7 +171,7 @@ Results showed that:
 U-net: Originally developed for biomedicine and uses upsampling technique instead of pooling and consits of a encoder and a decoder, so XD_XD replaces the encoder by the VGG16 and the decoder remains as the u-net. **Training time: 7 days**.
 
 
-**Tutorials**: AWS:https://registry.opendata.aws/spacenet/
+**Tutorials**: AWS: <a href="https://registry.opendata.aws/spacenet/">[Ref]</a>
 
 https://aws.amazon.com/es/blogs/machine-learning/extracting-buildings-and-roads-from-aws-open-data-using-amazon-sagemaker/ 
  
