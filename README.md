@@ -104,8 +104,6 @@ Output will consist of:
 
 ## Paper Spacenet 7
 
-# Review
-
 ### Evaluation metrix 
 
 **SCOT : spacenet change and object tracking** 
@@ -150,6 +148,15 @@ The idea of using these 2 terms (change and tracking terms) generalizes the F1 s
 MUDS dataset = spacenet dataset 
 ond its relevance for disaster response, disease preparedness, and environmental monitoring, time series analysis of satellite imagery poses unique technical challenges often unaddressed by existing methods.
 
+### Spacenet 4 [Ref] (https://medium.com/the-downlinq/a-deep-dive-into-the-spacenet-4-winning-algorithms-8d611a5dfe25)
+
+Results showed that:
+
+1. Augmentation strategies: Flipping or rotating worsen results because of distorted images and inplaced labeling (shattered by shadows). Then, algorithms need to know the right labeling positions
+
+2. Loss functions: Combination of Dice coefficient + Focal loss yielded best results than Jaccard. (top 2 competitors [Focal loss] (https://arxiv.org/abs/1708.02002)) which is basically a binary cross-entropy variant that penalizes low-confidence predictions more strongly. 
+
+
 **Tutorials**: AWS:https://registry.opendata.aws/spacenet/
 
 https://aws.amazon.com/es/blogs/machine-learning/extracting-buildings-and-roads-from-aws-open-data-using-amazon-sagemaker/ 
@@ -157,3 +164,5 @@ https://aws.amazon.com/es/blogs/machine-learning/extracting-buildings-and-roads-
 https://medium.com/the-downlinq/getting-started-with-spacenet-data-827fd2ec9f53
 
 https://medium.com/the-downlinq/announcing-solaris-an-open-source-python-library-for-analyzing-overhead-imagery-with-machine-48c1489c29f7
+
+
