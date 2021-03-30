@@ -1,0 +1,7 @@
+.DS_Store
+.ipynb_checkpoints
+_extras
+__pycache__
+xd_xd.pth
+#ignore contents of models
+models/*
