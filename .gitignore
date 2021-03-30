@@ -2,4 +2,6 @@
 .ipynb_checkpoints
 _extras
 __pycache__
-
+*.pth
+#ignore contents of models
+models/*
