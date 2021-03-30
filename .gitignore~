@@ -5,3 +5,5 @@ __pycache__
 xd_xd.pth
 #ignore contents of models
 models/*
+*.pth
+borrar.pth
