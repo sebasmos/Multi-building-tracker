@@ -201,3 +201,11 @@ https://www.linkedin.com/in/roshanr11/
 
 [Roshan11](https://github.com/roshanr11?tab=repositories) 
 
+*Fixing GDAL to install solaris on Kaggle or Colab*
+
+http://www.acgeospatial.co.uk/colaboratory-notebooks-and-gdal/
+
+https://gist.github.com/cspanring/5680334
+
+Continue guide: https://colab.research.google.com/drive/1n8A8pK9BSgWV9SWguHCsp--25OD4ky0F?usp=sharing#scrollTo=nHnIF6Zwr-37 
+
