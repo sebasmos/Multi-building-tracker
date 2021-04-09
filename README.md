@@ -171,6 +171,11 @@ Results showed that:
 U-net: Originally developed for biomedicine and uses upsampling technique instead of pooling and consits of a encoder and a decoder, so XD_XD replaces the encoder by the VGG16 and the decoder remains as the u-net. **Training time: 7 days**.
 
 
+### SpaceNet 7 Results: arXiv Paper and Winning Model Release <a href="https://medium.com/the-downlinq/spacenet-7-results-arxiv-paper-and-winning-model-release-8da36df16aa5">[Ref]</a>
+
+
+Winner codes: https://github.com/SpaceNetChallenge/SpaceNet7_Multi-Temporal_Solutions
+
 **Tutorials**: AWS: <a href="https://registry.opendata.aws/spacenet/">[Ref]</a>
 
 https://aws.amazon.com/es/blogs/machine-learning/extracting-buildings-and-roads-from-aws-open-data-using-amazon-sagemaker/ 
@@ -188,6 +193,14 @@ https://www.kaggle.com/c/deepfake-detection-challenge
 spacenet winners
 
 https://medium.com/the-downlinq/spacenet-7-results-arxiv-paper-and-winning-model-release-8da36df16aa5
+
+CONTINUE CHECKING https://medium.com/the-downlinq/spacenet-7-results-tis-the-season-fadc722fdff0
+
+https://github.com/spacenetchallenge/spacenet_off_nadir_solutions
+
+
+https://medium.com/the-downlinq/spacenet-7-results-arxiv-paper-and-winning-model-release-8da36df16aa5
+
 
 ### NOTES
 

@@ -1,6 +1,6 @@
 model_name: xdxd_spacenet4
 
-model_path: '/path_to_baseline/models/sn7_baseline/xdxd_final.pth'
+model_path: '/home/sebasmos/Documentos/TRDP/Spacenet7TRDP.git/baseline/models/sn7_baseline/xdxd_final.pth'
 train: false
 infer: true
 
