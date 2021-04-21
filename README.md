@@ -20,19 +20,28 @@
         cd /path_to_baseline/
         git clone https://github...
  
-3. Instead (It worked like this in Ubuntu 20.10): 
+3. In Ubuntu 20.10: 
 Install anaconda https://docs.anaconda.com/anaconda/install/linux/ 
+
+
 Install solaris: https://solaris.readthedocs.io/en/latest/installation.html 
+
+
 Install Nvidia-docker https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html  
+
+
 Install docker: https://docs.docker.com/get-docker/  
 
-After this, follow the next command to create a new environment called "Solaris" in ANaconda:
+After this, create a new Solaris environment in ANaconda:
 
-git clone https://github.com/cosmiq/solaris.git
-cd solaris
-conda env create -f environment-gpu.ymlv
+```git clone https://github.com/cosmiq/solaris.git```
 
-conda activate solaris
-pip install .
+```cd solaris```
+
+```conda env create -f environment-gpu.ymlv```
+
+```conda activate solaris```
+
+```pip install . ```
 
 From console, always activate this option manually through``` conda activate solaris ``` or manually tipe ```anaconda-navigator``` from terminal and change ```root``` to ```solaris```, install Jupyter in this environment +  requirements.txt using ```pip install -r requirements.txt```. 
