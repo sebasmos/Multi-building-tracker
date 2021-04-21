@@ -36,24 +36,3 @@ conda activate solaris
 pip install .
 
 From console, always activate this option manually through``` conda activate solaris ``` or manually tipe ```anaconda-navigator``` from terminal and change ```root``` to ```solaris```, install Jupyter in this environment +  requirements.txt using ```pip install -r requirements.txt```. 
-
-Output will consist of:
-
-1. Inference masks:
-
-<p align="left">
-<img src="docs/figs/im_mask.png" height="400" alt="Header">
-</p>
-
-2. Building footprints:
-
-<p align="left">
-<img src="docs/figs/footprints.png" height="400" alt="Header">
-</p>
-
-3. Building footprints matched by ID across the data cube:
-
-<p align="left">
-<img src="docs/figs/footprints_matched.png" height="400" alt="Header">
-</p>
-
