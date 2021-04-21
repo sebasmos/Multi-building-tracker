@@ -10,3 +10,4 @@ os.makedirs(os.path.dirname(config['inference']['output_dir']), exist_ok=True)
 
 inferer = sol.nets.infer.Inferer(config)
 inferer()
+print('terminooooo')

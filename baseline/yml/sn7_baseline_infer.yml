@@ -1,6 +1,7 @@
 model_name: xdxd_spacenet4
 
-model_path: '/home/sebasmos/Documentos/TRDP/Spacenet7TRDP.git/baseline/models/sn7_baseline/xdxd_final.pth'
+#model_path: '/content/drive/My Drive/Colab Notebooks/SPACENET7/CosmiQ_SN7_Baseline/models/sn7_baseline/xdxd_final.pth'
+model_path: '/content/drive/MyDrive/Colab Notebooks/SPACENET7/CosmiQ_SN7_Baseline/xdxd_best_epoch3_4.336999893188477.pth'
 train: false
 infer: true
 
@@ -25,7 +26,7 @@ data_specs:
 
 training_data_csv:
 validation_data_csv:
-inference_data_csv: '/home/sebasmos/Documentos/TRDP/DATASET/SN7_buildings_train/csvs/sn7_baseline_test_public_df.csv'
+inference_data_csv: '/content/drive/MyDrive/Colab Notebooks/SPACENET7/DATASET/SN7_buildings_train/csvs/sn7_baseline_validation_final_df.csv'
 
 training_augmentation:
   augmentations:
@@ -93,4 +94,4 @@ training:
 inference:
   window_step_size_x:
   window_step_size_y:
-  output_dir: '/path_to_baseline/inference_out/sn7_baseline_preds/raw'
+  output_dir: '/content/drive/My Drive/Colab Notebooks/SPACENET7/CosmiQ_SN7_Baseline/inference_out_final/sn7_baseline_preds/raw'

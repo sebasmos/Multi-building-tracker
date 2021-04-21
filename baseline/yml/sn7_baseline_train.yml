@@ -23,7 +23,8 @@ data_specs:
   val_holdout_frac: 0.1
   data_workers:
 
-training_data_csv: '/home/sebasmos/Documentos/TRDP/DATASET/SN7_buildings_train/csvs/sn7_baseline_train_df.csv'
+#training_data_csv: '/content/drive/MyDrive/Colab Notebooks/SPACENET7/DATASET/SN7_buildings_train/csvs/sn7_baseline_train_df.csv'
+training_data_csv: '/content/drive/MyDrive/Colab Notebooks/SPACENET7/DATASET/SN7_buildings_train/csvs/sn7_baseline_train_final_df.csv'
 validation_data_csv:
 inference_data_csv:
 
@@ -79,7 +80,9 @@ training:
     early_stopping:
         patience: 24
     model_checkpoint:
-      filepath: '/path_to_baseline/models/sn7_baseline/xdxd_best.pth'
+  
+      filepath: '/content/drive/MyDrive/Colab Notebooks/SPACENET7/CosmiQ_SN7_Baseline/xdxd_best_epoch3_4.336999893188477.pth'
+      #filepath: '/content/drive/MyDrive/Colab Notebooks/SPACENET7/CosmiQ_SN7_Baseline/models/sn7_baseline/xdxd_best.pth'
       monitor: val_loss
     lr_schedule:
       schedule_type: arbitrary
@@ -87,7 +90,8 @@ training:
         milestones:
           - 200
         gamma: 0.1
-  model_dest_path: '/path_to_baseline/models/sn7_baseline/xdxd_final.pth'
+  #model_dest_path: '/content/drive/MyDrive/Colab Notebooks/SPACENET7/CosmiQ_SN7_Baseline/models/sn7_baseline/xdxd_final.pth'
+  model_dest_path: '/content/drive/MyDrive/Colab Notebooks/SPACENET7/CosmiQ_SN7_Baseline/models/xdxd_final.pth'
   verbose: true
 
 inference:
