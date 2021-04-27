@@ -1,5 +1,5 @@
 
-#  The SpaceNet 7 Baseline Algorithm 
+#  The SpaceNet 7 - Updated Baseline Algorithm 
 -----------
 
 1. Download SpaceNet 7 Data
