@@ -52,27 +52,35 @@ class Dataloader_trdp(Dataset):
             csv_file (Path): Path to the csv file with annotations
             root_dir (Path): Parent directory containing all other directories.
             no_udm (bool): Specifies whether the dataset will load UDM images or not.
-            transform (callable, optional): Optional transform to be applied on a sample.
+            transform (callable, optional): Optional transform to be applied on a sample. This will be used for data augmentation
             chip_dimension (int, optional): Specifies the dimensions of the chip being generated.
         """
         self.annotations = pd.read_csv(csv_file)
         self.root_dir = root_dir
         self.no_udm = no_udm
         self.transform = transform
-        self.idx_combinations = self.total_number_of_images()
+        self.total_images_index = self.total_number_of_images()
         self.chip_dimension = chip_dimension
         if self.chip_dimension is not None:
             self.chip_generator = self.__ChipGenerator(chip_dimension = self.chip_dimension)
             # this will be replaced later with an abstracted version
             # returns number of chips per image assuming all images are 1024
+            # We will obtain the total number of chips as a patching manual method
             self.n_chips = ((1024 - 1) // self.chip_dimension + 1)**2
-            
+    '''
+    __len__ gets the total number of patches as the number of images available multiply by the number of splits n_chips
+    '''
     def __len__(self):
         if self.chip_dimension is not None: # Total # images = No clouds + Not none
-            return len(self.idx_combinations)*self.n_chips
+            return len(self.total_images_index)*self.n_chips
         else:
-            return len(self.idx_combinations)
-    
+            # if no patching is perform, image remain constant
+            return len(self.total_images_index)
+    '''
+    __getitem__ receives the index idx for each element of the dataset, interatevely.
+    raster_idx is the index for patches: number of idx available over the number of chips
+    chips_idx is the module of index with number of chips
+    '''
     def __getitem__(self,idx):
         if self.chip_dimension is not None:
             raster_idx = idx//self.n_chips
@@ -82,24 +90,20 @@ class Dataloader_trdp(Dataset):
             
         if torch.is_tensor(raster_idx):
             raster_idx = raster_idx.tolist()
-        # get the indices of the 2 images
-        idx1 = self.idx_combinations[raster_idx]
-        # paths where the images are stored
+        # Obtain the corresponding index to the desired iteration of the raster
+        idx1 = self.total_images_index[raster_idx]
+        # paths where the images are stored: containing UDM mask
         img1_path = self.root_dir/self.annotations.loc[idx1,'images_masked']
         # paths where the corresponding true building footprints 
         labels1_path = self.root_dir/self.annotations.loc[idx1,'labels_match_pix']
         # read rasters using imported rasterio library
         with rio.open(img1_path) as r1:
             raster1 = r1.read()[0:3]  
-        # get the concatenated array of the 2 images that will be fed into the neural_net
-        raster_diff = raster1 #np.concatenate((raster1,raster2),axis=0)
+        raster_diff = raster1 
         # get the dates for the images
         date1 = tuple(self.annotations.loc[idx1,['month','year']])
-        #date2 = tuple(self.annotations.loc[idx2,['month','year']])
         # read geojson files for each of the satellite images into a geodataframe
         gdf1 = gpd.read_file(labels1_path).set_index('Id').sort_index()
-        #gdf2 = gpd.read_file(labels2_path).set_index('Id').sort_index()
-        # get the change between the 2 satellite images by comparing their polygons
         gdf_diff = gdf1  # self.__geo_difference(labels1_path,labels2_path)
         # get the corresponding rasterized image of the geodataframes
         mask_diff = self.__rasterize_gdf(gdf_diff,out_shape=raster1.shape[1:3])
@@ -144,6 +148,11 @@ class Dataloader_trdp(Dataset):
             
         return sample
     
+    '''
+    total_number_of_images obtains the indexes for the images_masks, this can be changed by updating the groupby. 
+    If UDM filter is available to discard cloudy images.
+    OUTPUT: indexes for selected folder. 
+    '''
     def total_number_of_images(self):
             # we need to change it to obtain all the possible images we are going to use
             total_images = []
