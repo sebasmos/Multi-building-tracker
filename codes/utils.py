@@ -41,21 +41,17 @@ def check_accuracy(loader, model, device="cuda"):
     
 def unpatchify_custom(img_patches, block_size):
     B0, B1 = block_size
-    m,n,r,q = img_patches.shape
-    shp = m + r - 1, n + q - 1
+    N = 1024 #np.prod(img_patches.shape[1::2])
+    patches2D = img_patches.transpose(0,2,1,3).reshape(-1,N)
 
-    p1 = img_patches[::B0,::B1].swapaxes(1,2)
-    p1 = p1.reshape(-1,p1.shape[2]*p1.shape[3])
-    p2 = img_patches[:,-1,0,:]
-    p3 = img_patches[-1,:,:,0].T
-    p4 = img_patches[-1,-1]
-
-    out = np.zeros(shp,dtype=img_patches.dtype)
-    out[:p1.shape[0],:p1.shape[1]] = p1
-    out[:p2.shape[0],-p2.shape[1]:] = p2
-    out[-p3.shape[0]:,:p3.shape[1]] = p3
-    out[-p4.shape[0]:,-p4.shape[1]:] = p4
-    return out
+    m,n = patches2D.shape
+    row_mask = np.zeros(m,dtype=bool)
+    col_mask = np.zeros(n,dtype=bool)
+    row_mask[::B0]= 1
+    col_mask[::B1]= 1
+    row_mask[-B0:] = 1
+    col_mask[-B1:] = 1
+    return patches2D[np.ix_(row_mask, col_mask)]
 
 def save_predictions_as_imgs(
     loader, model, folder="saved_images/", device="cuda"
@@ -71,20 +67,24 @@ def save_predictions_as_imgs(
         with torch.no_grad():
             preds = torch.sigmoid(model(x))
             preds = (preds > 0.5).float()
-            print(preds.shape)
         
-       # preds = preds.squeeze() # get rid of 1d and leave chxNXN
-       
+        # Unpatch predictions
+        
         cp = preds.cpu().data.numpy()
-        
         block_size = (1024, 1024)
-        
-        rec = unpatchify_custom(cp, block_size)
+        reconstructed = unpatchify_custom(cp, block_size)
+        reconstructed = torch.from_numpy(reconstructed)
         
         # To store, save_image requires 4 dims
         torchvision.utils.save_image(
-            rec, f"{folder}/pred_{idx}.tiff"
+            reconstructed, f"{folder}/pred_{idx}.png"
         )
-        torchvision.utils.save_image(y.unsqueeze(1), f"{folder}{idx}.png")
+        
+        # Unpatch labels
+        y = y.unsqueeze(1) # add 1 D
+        labels = y.cpu().data.numpy() #convert to cpu numpy
+        labels = unpatchify_custom(labels, block_size) # return 1024x1024
+        labels = torch.from_numpy(labels) # return torch tensor
+        torchvision.utils.save_image(labels, f"{folder}/label_{idx}.png")
 
     model.train()
