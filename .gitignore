@@ -11,3 +11,7 @@ dataset
 DATASET
 output_csv
 output_csvs
+*~
+codes/saved_images
+*.pth.tar
+*.tar

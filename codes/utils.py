@@ -1,6 +1,8 @@
 import torch
 import torchvision
 from torch.utils.data import DataLoader
+from patchify import patchify, unpatchify
+import numpy as np
 
 def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
     print("=> Saving checkpoint")
@@ -36,11 +38,30 @@ def check_accuracy(loader, model, device="cuda"):
         )
     print(f"Dice score: {dice_score/len(loader)}")
     model.train()
+    
+def unpatchify_custom(img_patches, block_size):
+    B0, B1 = block_size
+    m,n,r,q = img_patches.shape
+    shp = m + r - 1, n + q - 1
+
+    p1 = img_patches[::B0,::B1].swapaxes(1,2)
+    p1 = p1.reshape(-1,p1.shape[2]*p1.shape[3])
+    p2 = img_patches[:,-1,0,:]
+    p3 = img_patches[-1,:,:,0].T
+    p4 = img_patches[-1,-1]
+
+    out = np.zeros(shp,dtype=img_patches.dtype)
+    out[:p1.shape[0],:p1.shape[1]] = p1
+    out[:p2.shape[0],-p2.shape[1]:] = p2
+    out[-p3.shape[0]:,:p3.shape[1]] = p3
+    out[-p4.shape[0]:,-p4.shape[1]:] = p4
+    return out
 
 def save_predictions_as_imgs(
     loader, model, folder="saved_images/", device="cuda"
 ):
     model.eval()
+    
     
     for idx, data in enumerate(loader):
         x = data["raster_diff"].float()
@@ -48,13 +69,22 @@ def save_predictions_as_imgs(
         x = x.to(device)
         y = y.to(device).squeeze()
         with torch.no_grad():
-            preds = torch.sigmoid(model(x).squeeze())
+            preds = torch.sigmoid(model(x))
             preds = (preds > 0.5).float()
             print(preds.shape)
-    
+        
+       # preds = preds.squeeze() # get rid of 1d and leave chxNXN
+       
+        cp = preds.cpu().data.numpy()
+        
+        block_size = (1024, 1024)
+        
+        rec = unpatchify_custom(cp, block_size)
+        
+        # To store, save_image requires 4 dims
         torchvision.utils.save_image(
-            preds, f"{folder}/pred_{idx}.tiff"
+            rec, f"{folder}/pred_{idx}.tiff"
         )
-        torchvision.utils.save_image(y.squeeze(), f"{folder}{idx}.png")
+        torchvision.utils.save_image(y.unsqueeze(1), f"{folder}{idx}.png")
 
     model.train()

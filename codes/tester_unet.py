@@ -32,7 +32,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 in_channel = 3
 num_classes = 1
 learning_rate = 1e-3
-batch_size = 8
+batch_size = 16 # 64 patches to reconstruct img of 1024
 num_epochs = 2
 
 chip_dimension = 256
@@ -136,6 +136,7 @@ if LOAD_MODEL:
 #check_accuracy(test_loader, model, device=DEVICE)
 scaler = torch.cuda.amp.GradScaler()
 
+num_epochs = 10
 
 for epoch in range(num_epochs):
         #train_fn(train_loader, model, optimizer, loss_fn, scaler)
