@@ -13,5 +13,8 @@ output_csv
 output_csvs
 *~
 codes/saved_images
+codes/outputs
+codes/output_csvs
+outputs
 *.pth.tar
 *.tar

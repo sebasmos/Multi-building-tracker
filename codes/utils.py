@@ -3,6 +3,13 @@ import torchvision
 from torch.utils.data import DataLoader
 from patchify import patchify, unpatchify
 import numpy as np
+from tqdm import tqdm
+import torch.nn.functional as F  # Parameterless functions, like (some) activation functions
+import matplotlib
+
+import os
+# Set device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
     print("=> Saving checkpoint")
@@ -17,14 +24,13 @@ def check_accuracy(loader, model, device="cuda"):
     num_pixels = 0
     dice_score = 0
     model.eval()
-    print("ENTROOOO")
     with torch.no_grad():
             for idx, data in enumerate(loader):
                 x = data["raster_diff"].float()
                 y = data["mask_diff"].float()
                 x = x.to(device)
                 y = y.to(device).squeeze()
-                print(f"x.shape : {x.shape}, y.shape : {y.shape}")
+                #print(f"x.shape : {x.shape}, y.shape : {y.shape}")
                 preds = torch.sigmoid(model(x).squeeze())
                 preds = (preds > 0.5).float()
                 num_correct += (preds == y).sum()
@@ -88,3 +94,82 @@ def save_predictions_as_imgs(
         torchvision.utils.save_image(labels, f"{folder}/label_{idx}.png")
 
     model.train()
+
+def store_predictions(y_pred, true_pred):
+
+    
+    images = "outputs"
+    labels = images+"/predictions"
+    true = images+"/labels"
+    
+    if not os.path.exists(images):
+        os.makedirs(images)
+    if not os.path.exists(labels):
+            os.makedirs(labels)
+    if not os.path.exists(true):
+            os.makedirs(true)
+
+    p = 0
+
+    for i in y_pred.squeeze():
+      
+        matplotlib.image.imsave(f"{labels}/Pred_{p}.png", i, cmap='gray')
+
+        p+=1
+        
+    p = 0 
+    for j in true_pred.squeeze():
+        matplotlib.image.imsave(f"{true}/True_{p}.png", j, cmap='gray')
+        p+=1
+
+
+def predict(data_loader, model):
+    
+    print("Calculating segmentation with trained model..")
+    model.eval()
+
+    # save the predictions in this list
+    y_pred = []
+    y_true = []
+    
+    
+    loop = tqdm(data_loader, leave = False)
+
+
+        # go over each batch in the loader. We can ignore the targets here
+    for batch_idx, data in enumerate(loop):
+            print(f" - Batch index [{batch_idx}/{len(data_loader)}]")
+            batch = data["raster_diff"].float()
+            y = data["mask_diff"].float()
+            batch = batch.to(device)
+            y = y.to(device) # no squeeze for storing as same format
+                # Move batch to the GPU
+            batch = batch.to(device)
+
+            # predict probabilities of each class
+            
+            with torch.no_grad():
+                predictions = torch.sigmoid(model(batch))
+                predictions = (predictions > 0.5).float()
+
+            
+            # move to the cpu and convert to numpy
+            predictions = predictions.cpu().numpy()
+
+            # save pred
+            y_pred.append(predictions)
+            # save respective labels
+            
+            labels = y.cpu().data.numpy() #convert to cpu numpy
+            y_true.append(labels)
+            
+            '''
+            if batch_idx == 2:
+                break
+            '''
+    # stack predictions into a (num_samples, img size) array
+    y_pred = np.vstack(y_pred)
+    y_true = np.vstack(y_true)
+    
+    model.train()
+    return y_pred, y_true
