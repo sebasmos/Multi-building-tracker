@@ -24,4 +24,6 @@ outputs
 *.csv
 registros
 registros/*
+codes/registros/*
+codes/registros
 codes
