@@ -300,6 +300,8 @@ def testing(args, model, device, test_loader):
     ##Compute Mean Intersection over Union (mIoU)
     ##mIoU: Mean (of all classes) of intersection over union between prediction
     ##and ground-truth
+    
+    ''' # To improve
     hist = []# np.zeros((args.num_classes, args.num_classes))
     
     for lp, lt in zip(predictions_all, gts_all):
@@ -308,7 +310,8 @@ def testing(args, model, device, test_loader):
     iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
     
     mean_iu = np.nanmean(iu)
-    
+    '''
+    # Improved: https://towardsdatascience.com/intersection-over-union-iou-calculation-for-evaluating-an-image-segmentation-model-8b22e2e84686 
     iou_scores = []
     for lp, lt in zip(predictions_all, gts_all):
         intersection = np.logical_and(lp.flatten(), lt.flatten())  
