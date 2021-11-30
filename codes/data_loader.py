@@ -141,6 +141,8 @@ class Dataloader_trdp(Dataset):
                 sample['raster_diff'] = raster_diff
                 mask_diff = mask_diff.permute(2,0,1)
                 sample['mask_diff'] = mask_diff
+                
+                
             else:
                 sample['raster_diff'] = raster_diff
                 mask_diff = np.moveaxis(mask_diff,-1,0)
