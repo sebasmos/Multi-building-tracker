@@ -16,14 +16,14 @@ codes/saved_images
 codes/outputs
 codes/output_csvs
 codes/models
-codes/registros
+registros
 outputs
 *.pth.tar
 *.tar
 *.pth
 *.csv
-registros
 registros/*
 codes/registros/*
 codes/registros
 codes
+	
