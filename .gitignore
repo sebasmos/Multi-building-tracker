@@ -16,7 +16,9 @@ codes/saved_images
 codes/outputs
 codes/output_csvs
 codes/models
+codes/registros
 outputs
 *.pth.tar
 *.tar
 *.pth
+*.csv
