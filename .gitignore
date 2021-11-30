@@ -22,3 +22,6 @@ outputs
 *.tar
 *.pth
 *.csv
+registros
+registros/*
+codes
