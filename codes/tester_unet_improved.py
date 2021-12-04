@@ -52,7 +52,8 @@ from utils import (
     check_accuracy,
     save_predictions_as_imgs,
     predict,
-    store_predictions
+    store_predictions,
+    store_predictions_with_patching
 )
 
 # Clean graphics memory
@@ -74,10 +75,11 @@ in_channel = 3
 num_classes = 1
 learning_rate = 1e-4
 batch_size = 1
-num_epochs = 1
+num_epochs = 2
 chip_dimension = 256
 LOAD_MODEL = True
 TRAIN = False
+TEST = False
 # define threshold to filter weak predictions
 THRESHOLD = 0.2
 
@@ -193,8 +195,6 @@ random.seed(args.seed)  # python seed for image transformation
 np.random.seed(args.seed)
 
 
-
-
 def _fast_hist(label_pred, label_true, num_classes):
     mask = (label_true >= 0) & (label_true < num_classes)
     hist = np.bincount(
@@ -257,7 +257,7 @@ def testing(args, model, device, test_loader):
     gts_all, predictions_all = [], []
     with torch.no_grad():
         for batch_idx, (data) in enumerate(test_loader):
-            print(f" {batch_idx}/{len(test_loader)} ")
+            #print(f" {batch_idx}/{len(test_loader)} ")
             images = data["raster_diff"].float()
             mask = data["mask_diff"].float()#type(torch.LongTensor)
             images, mask = images.to(device), mask.to(device).squeeze()
@@ -296,21 +296,12 @@ def testing(args, model, device, test_loader):
 
     #test_loss /= len(test_loader.dataset)
     loss_per_epoch = [np.average(loss_per_batch)]
+    
 
     ##Compute Mean Intersection over Union (mIoU)
     ##mIoU: Mean (of all classes) of intersection over union between prediction
     ##and ground-truth
-    
-    ''' # To improve
-    hist = []# np.zeros((args.num_classes, args.num_classes))
-    
-    for lp, lt in zip(predictions_all, gts_all):
-        hist.append(_fast_hist(lp.flatten(), lt.flatten(), args.num_classes))
 
-    iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
-    
-    mean_iu = np.nanmean(iu)
-    '''
     # Improved: https://towardsdatascience.com/intersection-over-union-iou-calculation-for-evaluating-an-image-segmentation-model-8b22e2e84686 
     iou_scores = []
     for lp, lt in zip(predictions_all, gts_all):
@@ -323,8 +314,11 @@ def testing(args, model, device, test_loader):
     
     print('\nTest set ({:.0f}): Average loss: {:.4f}, mIoU: {:.4f}\n'.format(
         len(test_loader.dataset), loss_per_epoch[-1], mean_iu)) 
+    
+    ###########################################################################
+    # Store predictions
 
-    return (loss_per_epoch, mean_iu)
+    return loss_per_epoch, mean_iu, predictions_all, gts_all
     
 
 model = UNET(in_channels=3, out_channels=1).to(DEVICE)
@@ -350,7 +344,7 @@ cont = 0
 res_path = "./metrics_" + args.experiment_name
 
 
-filename = "pspnetlite_data_pruebas.pth" # my_checkpoint.pth.tar
+filename = "unet_2_dic_full_10_epochs.pth" # my_checkpoint.pth.tar
 model_path = "./models" # + filename
 
 if not os.path.exists(model_path):
@@ -362,28 +356,69 @@ if LOAD_MODEL:
 if not os.path.isdir(res_path):
     os.makedirs(res_path)
 
-if TRAIN:
-    for epoch in range(1, args.epoch + 1):
+for epoch in range(1, args.epoch + 1):
         st = time.time()
         scheduler.step()    
         # train for one epoch
-        print("PSPnetLite training, epoch " + str(epoch))
+        if TRAIN:
 
-        loss_per_epoch = train_SemanticSeg(args, model, device, train_loader, optimizer, epoch)
-
-        loss_train_epoch += [loss_per_epoch]
-        
-        if epoch == args.epoch:
-            torch.save(model.state_dict(), "pspnetlite_data_pruebas.pth")
-
-        np.save(res_path + '/' + 'LOSS_epoch_train.npy', np.asarray(loss_train_epoch))
+            print("Unet improved --> training, epoch " + str(epoch))
     
+            loss_per_epoch = train_SemanticSeg(args, model, device, train_loader, optimizer, epoch)
+    
+            loss_train_epoch += [loss_per_epoch]
+            
+            if epoch == args.epoch:
+                torch.save(model.state_dict(), "models/" + filename)
+    
+            np.save(res_path + '/' + 'LOSS_epoch_train.npy', np.asarray(loss_train_epoch))
+        
+        # TESTING
+        if TEST:
+            print("Unet improved ==> testing, epoch " + str(epoch))
+            # test
+            loss_per_epoch_test, acc_val_per_epoch_i, a,b = testing(args, model, device, test_loader)
+    
+            loss_test_epoch += loss_per_epoch_test
+            acc_test_per_epoch += [acc_val_per_epoch_i]
+    
+    
+            if epoch == 1:
+                best_acc_val = acc_val_per_epoch_i
+    
+            else:
+                if acc_val_per_epoch_i > best_acc_val:
+                    best_acc_val = acc_val_per_epoch_i
+    
+    
+            np.save(res_path + '/' + 'LOSS_epoch_val.npy', np.asarray(loss_test_epoch))
+    
+            # save accuracies:
+            np.save(res_path + '/' + 'accuracy_per_epoch_val.npy', np.asarray(acc_test_per_epoch))
+            
+            cont += 1
 
+scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
+    
+# PREDICT
+
+y_pred, true_pred = [], []
+
+loss_per_epoch_test, acc_val_per_epoch_i, y_pred, true_pred = testing(args, model, device, test_loader)
+
+y_pred = np.array(y_pred)
+true_pred = np.array(true_pred)
+print(f"y_pred sizes: {y_pred.shape} - true_pred sizes: {true_pred.shape}")
+print(f"y_pred pixel values: {np.unique(y_pred)}")
+
+store_predictions_with_patching(y_pred, true_pred, 16)
+    
+'''
 for epoch in range(1, args.epoch + 1):
     st = time.time()
     scheduler.step()    
     # train for one epoch
-    print("PSPnetLite testing, epoch " + str(epoch))
+    print("Unet improved ==> testing, epoch " + str(epoch))
     # test
     loss_per_epoch_test, acc_val_per_epoch_i = testing(args, model, device, test_loader)
 
@@ -407,3 +442,10 @@ for epoch in range(1, args.epoch + 1):
     cont += 1
 
 scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
+
+# To delete temporal files
+import shutil
+
+shutil.rmtree("outputs")
+
+'''

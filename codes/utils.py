@@ -164,6 +164,8 @@ def store_predictions_with_patching(y_pred, true_pred, num_patches = 16):
     # len(y_pred) should be divisible by 16 or 2*batch_size if batch is 8
     for i in range(0, fixed_batch, num_patches):
             print(f"Prediction ({p})")
+            #
+            #
             # Create sliding window to reconstruct original image of size window x window
             pred = y_pred[ p*num_patches : p*num_patches + num_patches ]
             # Delete additional dimension
@@ -175,7 +177,7 @@ def store_predictions_with_patching(y_pred, true_pred, num_patches = 16):
             
             reconstructed = unpatchify(prediction, (dimen*length, dimen*length))
             
-           # print(reconstructed.shape)
+            # print(reconstructed.shape)
                 # To store, save_image requires 4 dims        
             plt.imsave(f"{labels}/Pred_{p}.png", reconstructed, cmap='gray')
             p+=1
