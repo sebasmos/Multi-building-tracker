@@ -1,4 +1,5 @@
 import torch
+import torch as nn
 import torchvision
 from torch.utils.data import DataLoader
 from patchify import patchify, unpatchify
@@ -132,6 +133,38 @@ def store_predictions(y_pred, true_pred):
     for j in true_pred.squeeze():
         matplotlib.image.imsave(f"{true}/True_{p}.png", j, cmap='gray')
         p+=1
+        
+def store_predictions_unet_improved(y_pred, true_pred, batch_idx):
+
+    images = "outputs"
+    labels = images+"/predictions"
+    true = images+"/labels"
+    
+    if not os.path.exists(images):
+        os.makedirs(images)
+    if not os.path.exists(labels):
+            os.makedirs(labels)
+    if not os.path.exists(true):
+            os.makedirs(true)
+
+    if batch_idx == 10:
+        p = 1
+        w = 1
+    else:
+        p = batch_idx - 10 + 1
+        w = batch_idx - 10 + 1
+
+    for i in y_pred.squeeze():
+      
+        matplotlib.image.imsave(f"{labels}/Pred_{p}.png", i, cmap='gray')
+
+        p+=1
+        
+    
+    for j in true_pred.squeeze():
+        matplotlib.image.imsave(f"{true}/True_{w}.png", j, cmap='gray')
+        w+=1
+
 
 
 def store_predictions_with_patching(y_pred, true_pred, num_patches = 16):
@@ -286,3 +319,64 @@ def predict(data_loader, model, TAM):
 
     model.train()
     return y_pred, y_true
+
+
+
+def train_SemanticSeg_fixed_per_pixel(args, model, device, train_loader, optimizer, epoch):
+    THRESHOLD = 0.5
+    # switch to train mode
+    model.train()
+
+    train_loss = []
+    counter = 1
+
+    criterion = nn.BCEWithLogitsLoss()
+    gts_all, predictions_all = [], []
+
+    for batch_idx, (data) in enumerate(train_loader):
+        
+        images = data["raster_diff"].float()
+        
+        mask = data["mask_diff"].float()
+        
+        images, mask = images, mask.to(device).squeeze()
+
+        #Forward pass
+        outputs = model(images.to(device)).squeeze()
+        #outputs = outputs.clone().detach().cpu().numpy()
+#        outputs = outputs.cpu().numpy()
+        outputs = ((outputs - outputs.min())/(outputs.max()-outputs.min()))
+        #outputs = np.round(outputs)
+        outputs[outputs>THRESHOLD] = 1 
+        outputs[outputs<=THRESHOLD] = 0
+        outputs = torch.round(outputs)
+        #outputs = outputs.astype("int64")
+        '''
+        import matplotlib.pyplot as plt
+        outputs_plot = outputs.detach().cpu().numpy()
+        plt.imshow(outputs_plot)
+        plt.imshow(mask.cpu().numpy())
+        '''
+        # convert back to tensor
+        #outputs = torch.from_numpy(outputs)
+        #outputs = outputs.type(torch.float)
+        #Aggregated per-pixel loss
+        loss = criterion(outputs.to(device), mask)
+        train_loss.append(loss.item())
+
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+
+        loss.backward()
+        
+        optimizer.step()
+        
+        if counter % 15 == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}, Learning rate: {:.6f}'.format(
+                epoch, int(counter * len(images)), len(train_loader.dataset),
+                100. * counter / len(train_loader), loss.item(),
+                optimizer.param_groups[0]['lr']))
+        
+        counter = counter + 1
+        
+    return sum(train_loss) / len(train_loss)#, mean_iu

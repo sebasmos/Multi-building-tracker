@@ -34,7 +34,8 @@ import pandas as pd
 import numpy as np
 import os
 
-from model import UNET
+import matplotlib
+
 # Albumentations
 
 import albumentations as A
@@ -53,7 +54,8 @@ from utils import (
     save_predictions_as_imgs,
     predict,
     store_predictions,
-    store_predictions_with_patching
+    store_predictions_with_patching,
+    store_predictions_unet_improved
 )
 
 # Clean graphics memory
@@ -64,30 +66,35 @@ torch.cuda.empty_cache()
 import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
+'''
 def force_cudnn_initialization():
     s = 32
     dev = torch.device('cuda')
     torch.nn.functional.conv2d(torch.zeros(s, s, s, s, device=dev), torch.zeros(s, s, s, s, device=dev))
 
 force_cudnn_initialization()
+'''
 # Hyperparameters
 in_channel = 3
 num_classes = 1
 learning_rate = 1e-4
 batch_size = 1
 num_epochs = 2
-chip_dimension = 256
+chip_dimension = 1024
 LOAD_MODEL = True
 TRAIN = False
 TEST = False
+SAVE = True
 # define threshold to filter weak predictions
-THRESHOLD = 0.2
+THRESHOLD = 0.4
 
 '''
+train_dir  = Path('../../DATASET/dataset_pruebas/train')
+test_dir  = Path('../../DATASET/dataset_pruebas/validation')
 
 
 train_dir = Path('../../DATASET/archive/train_final')
-test_dir  = Path('../../DATASET/archive/_final')
+test_dir  = Path('../../DATASET/archive/val_final')
 
 
 csv_file = Path('./output_csvs/df_train_untidy.csv')
@@ -98,13 +105,17 @@ csv_file = Path('./registros/output_csvs_dataset_prueba/df_train_untidy.csv')
 csv_file_test = Path('./registros/output_csvs_dataset_prueba/df_test_untidy.csv')
 '''
 
+#train_dir = Path('../../DATASET/archive/train_final')
 
-train_dir = Path('../../DATASET/dataset_pruebas/train')
-test_dir  = Path('../../DATASET/dataset_pruebas/validation')
+train_dir  = Path('../../DATASET/dataset_pruebas/train')
+#test_dir  = Path('../../DATASET/dataset_pruebas/validation')
+test_dir  = Path('../../DATASET/archive/val_final')
 
-
+#csv_file = Path('./output_csvs/df_train_untidy.csv')
 csv_file = Path('./registros/output_csvs_dataset_prueba/df_train_untidy.csv')
-csv_file_test = Path('./registros/output_csvs_dataset_prueba/df_test_untidy.csv')
+#csv_file_test = Path('./registros/output_csvs_dataset_prueba/df_test_untidy.csv')
+
+csv_file_test = Path('./output_csvs/df_test_untidy.csv')
 
 root_dir  = train_dir
 
@@ -156,9 +167,6 @@ print(f"Train : {len(train_loader)} - Test: {len(test_loader)}")
 
 ###############################################################################
 
-# Set device
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 import torchvision.transforms.functional as TF
 import random
 import numpy as np
@@ -185,7 +193,8 @@ class configuration:
 args = configuration()
 
 # Make sure to enable GPU acceleration!
-device = 'cuda'
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 # Set random seed for reproducability
 torch.backends.cudnn.deterministic = True  # fix the GPU to deterministic mode
@@ -244,6 +253,7 @@ def train_SemanticSeg(args, model, device, train_loader, optimizer, epoch):
         
     return sum(train_loss) / len(train_loss)#, mean_iu
         
+        
 def testing(args, model, device, test_loader):
 
     # switch to train mode
@@ -251,48 +261,74 @@ def testing(args, model, device, test_loader):
     loss_per_batch = []
     test_loss = 0
 
-
     ##We ignore index 255, i.e. object contours labeled with 255 in the val GT
     criterion = nn.BCEWithLogitsLoss()
     gts_all, predictions_all = [], []
     with torch.no_grad():
         for batch_idx, (data) in enumerate(test_loader):
-            #print(f" {batch_idx}/{len(test_loader)} ")
+            print(f" {batch_idx}/{len(test_loader)} ")
             images = data["raster_diff"].float()
             mask = data["mask_diff"].float()#type(torch.LongTensor)
             images, mask = images.to(device), mask.to(device).squeeze()
-            pred = model(images).squeeze()
-
+            
+            
+            #Forward pass
+            outputs = model(images).squeeze()
+            #outputs = outputs.clone().detach().cpu().numpy()
+    #        outputs = outputs.cpu().numpy()
+            outputs = ((outputs - outputs.min())/(outputs.max()-outputs.min()))
+            #outputs = np.round(outputs)
+            outputs[outputs>THRESHOLD] = 1 
+            outputs[outputs<=THRESHOLD] = 0
+            outputs = torch.round(outputs)
+            
             #Aggregated per-pixel loss
-            loss = criterion(pred, mask)
+            loss = criterion(outputs, mask)
             loss_per_batch.append(loss.item())
             
-            predictions = pred.cpu().numpy()
-            predictions = ((predictions - predictions.min())/(predictions.max()-predictions.min()))
-            predictions[predictions>0.1] = 1 
-            predictions[predictions<=THRESHOLD] = 0
-            predictions = predictions.astype("int64")
-            
+            # Convert to numpy
+            outputs = outputs.detach().cpu().numpy()
+            outputs = outputs.astype("int64")
             #predictions = np.round(predictions)
+            
+            mask = mask.data.cpu().numpy()
+            mask = mask.astype("int64")
             
             '''
             import matplotlib.pyplot as plt
-            plt.imshow(predictions)
-            np.unique(predictions)
+            plt.imshow(outputs)
+            np.unique(outputs)
             
             
             preds = outputs.data.max(1)[1].squeeze(1).squeeze(0).cpu().numpy()
             
-            
-            '''
-
             mask = mask.data.cpu().numpy()
             mask = mask.astype("int64")
-            '''
             plt.imshow(mask)
+            
+            assert np.unique(mask) == np.unique(outputs*255)
             '''
             gts_all.append(mask)
-            predictions_all.append(255*predictions)
+            predictions_all.append(255*outputs)
+            
+            if SAVE:
+                
+                images = "outputs"
+                labels = images+"/predictions"
+                true = images+"/labels"
+                
+                if not os.path.exists(images):
+                    os.makedirs(images)
+                if not os.path.exists(labels):
+                        os.makedirs(labels)
+                if not os.path.exists(true):
+                        os.makedirs(true)
+            
+                matplotlib.image.imsave(f"{labels}/Pred_{batch_idx}.png", outputs , cmap='gray')
+            
+                matplotlib.image.imsave(f"{true}/True_{batch_idx}.png", mask, cmap='gray')
+                    
+            
 
     #test_loss /= len(test_loader.dataset)
     loss_per_epoch = [np.average(loss_per_batch)]
@@ -305,6 +341,8 @@ def testing(args, model, device, test_loader):
     # Improved: https://towardsdatascience.com/intersection-over-union-iou-calculation-for-evaluating-an-image-segmentation-model-8b22e2e84686 
     iou_scores = []
     for lp, lt in zip(predictions_all, gts_all):
+        # Convert lp to cpu
+        #lp = lp.detach().cpu().numpy()
         intersection = np.logical_and(lp.flatten(), lt.flatten())  
         union = np.logical_or(lp.flatten(), lt.flatten())  
         iou_score = np.sum(intersection) / np.sum(union)
@@ -321,7 +359,7 @@ def testing(args, model, device, test_loader):
     return loss_per_epoch, mean_iu, predictions_all, gts_all
     
 
-model = UNET(in_channels=3, out_channels=1).to(DEVICE)
+model = UNET(in_channels=3, out_channels=1).to(device)
 
 print('Total params: %2.fM' % (sum(p.numel() for p in model.parameters()) / 1000000.0))
     
@@ -344,7 +382,7 @@ cont = 0
 res_path = "./metrics_" + args.experiment_name
 
 
-filename = "unet_2_dic_full_10_epochs.pth" # my_checkpoint.pth.tar
+filename = "unet_7_dic_DATASET_PRUEBA_1_epochs_works.pth" # my_checkpoint.pth.tar
 model_path = "./models" # + filename
 
 if not os.path.exists(model_path):
@@ -406,14 +444,16 @@ y_pred, true_pred = [], []
 
 loss_per_epoch_test, acc_val_per_epoch_i, y_pred, true_pred = testing(args, model, device, test_loader)
 
+'''
 y_pred = np.array(y_pred)
-true_pred = np.array(true_pred)
+true_pred = np.array()
+
 print(f"y_pred sizes: {y_pred.shape} - true_pred sizes: {true_pred.shape}")
 print(f"y_pred pixel values: {np.unique(y_pred)}")
 
 store_predictions_with_patching(y_pred, true_pred, 16)
     
-'''
+
 for epoch in range(1, args.epoch + 1):
     st = time.time()
     scheduler.step()    
