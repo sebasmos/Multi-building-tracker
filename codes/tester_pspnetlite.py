@@ -34,6 +34,8 @@ import pandas as pd
 import numpy as np
 import os
 
+import matplotlib
+
 # Albumentations
 
 import albumentations as A
@@ -52,7 +54,8 @@ from utils import (
     save_predictions_as_imgs,
     predict,
     store_predictions,
-    store_predictions_with_patching
+    store_predictions_with_patching,
+    store_predictions_unet_improved
 )
 
 # Clean graphics memory
@@ -74,15 +77,16 @@ force_cudnn_initialization()
 # Hyperparameters
 in_channel = 3
 num_classes = 1
-learning_rate = 1e-4
+learning_rate = 1e-5
 batch_size = 1
-num_epochs = 2
-chip_dimension = 256
-LOAD_MODEL = True
+num_epochs = 1
+chip_dimension = 512
+LOAD_MODEL = False
 TRAIN = False
 TEST = False
+SAVE = True
 # define threshold to filter weak predictions
-THRESHOLD = 0.4
+THRESHOLD = 0.5
 
 '''
 train_dir  = Path('../../DATASET/dataset_pruebas/train')
@@ -200,56 +204,6 @@ random.seed(args.seed)  # python seed for image transformation
 np.random.seed(args.seed)
 
 
-def _fast_hist(label_pred, label_true, num_classes):
-    mask = (label_true >= 0) & (label_true < num_classes)
-    hist = np.bincount(
-        num_classes * label_true[mask].astype(int) +
-        label_pred[mask], minlength=num_classes ** 2).reshape(num_classes, num_classes)
-    return hist
-
-def train_SemanticSeg(args, model, device, train_loader, optimizer, epoch):
-    # switch to train mode
-    model.train()
-
-    train_loss = []
-    counter = 1
-
-    criterion = nn.BCEWithLogitsLoss()
-    gts_all, predictions_all = [], []
-
-    for batch_idx, (data) in enumerate(train_loader):
-        
-        images = data["raster_diff"].float()
-        
-        mask = data["mask_diff"].float()
-        
-        images, mask = images.to(device), mask.to(device).squeeze()
-
-        #Forward pass
-        outputs = model(images).squeeze()
-
-        
-        #Aggregated per-pixel loss
-        loss = criterion(outputs, mask)
-        train_loss.append(loss.item())
-
-        # compute gradient and do SGD step
-        optimizer.zero_grad()
-
-        loss.backward()
-        
-        optimizer.step()
-        
-        if counter % 15 == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}, Learning rate: {:.6f}'.format(
-                epoch, int(counter * len(images)), len(train_loader.dataset),
-                100. * counter / len(train_loader), loss.item(),
-                optimizer.param_groups[0]['lr']))
-        counter = counter + 1
-        
-    return sum(train_loss) / len(train_loss)#, mean_iu
-
-
 class PSPNetLite(nn.Module):
     def __init__(self, args, num_classes, pretrained=True, use_aux=True):
         super(PSPNetLite, self).__init__()
@@ -305,6 +259,57 @@ class PSPNetLite(nn.Module):
         x = self.final(torch.cat((x1, F.interpolate(x2, x1.size()[2:], mode='bilinear')), dim=1)) #
         ##return prediction after bilinear upsampling to original size
         return F.interpolate(x, x_size[2:], mode='bilinear')
+
+
+
+def _fast_hist(label_pred, label_true, num_classes):
+    mask = (label_true >= 0) & (label_true < num_classes)
+    hist = np.bincount(
+        num_classes * label_true[mask].astype(int) +
+        label_pred[mask], minlength=num_classes ** 2).reshape(num_classes, num_classes)
+    return hist
+
+def train_SemanticSeg(args, model, device, train_loader, optimizer, epoch):
+    # switch to train mode
+    model.train()
+
+    train_loss = []
+    counter = 1
+
+    criterion = nn.BCEWithLogitsLoss()
+    gts_all, predictions_all = [], []
+
+    for batch_idx, (data) in enumerate(train_loader):
+        
+        images = data["raster_diff"].float()
+        
+        mask = data["mask_diff"].float()
+        
+        images, mask = images.to(device), mask.to(device).squeeze()
+
+        #Forward pass
+        outputs = model(images).squeeze()
+
+        
+        #Aggregated per-pixel loss
+        loss = criterion(outputs, mask)
+        train_loss.append(loss.item())
+
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+
+        loss.backward()
+        
+        optimizer.step()
+        
+        if counter % 15 == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}, Learning rate: {:.6f}'.format(
+                epoch, int(counter * len(images)), len(train_loader.dataset),
+                100. * counter / len(train_loader), loss.item(),
+                optimizer.param_groups[0]['lr']))
+        counter = counter + 1
+        
+    return sum(train_loss) / len(train_loss)#, mean_iu
         
         
 def testing(args, model, device, test_loader):
@@ -334,30 +339,54 @@ def testing(args, model, device, test_loader):
             outputs[outputs>THRESHOLD] = 1 
             outputs[outputs<=THRESHOLD] = 0
             outputs = torch.round(outputs)
+            
+            #Aggregated per-pixel loss
+            loss = criterion(outputs, mask)
+            loss_per_batch.append(loss.item())
+            
+            # Convert to numpy
             outputs = outputs.detach().cpu().numpy()
             outputs = outputs.astype("int64")
             #predictions = np.round(predictions)
             
+            mask = mask.data.cpu().numpy()
+            mask = mask.astype("int64")
+            
             '''
             import matplotlib.pyplot as plt
-            plt.imshow(outputs.detach().cpu().numpy())
+            plt.imshow(outputs)
             np.unique(outputs)
             
             
             preds = outputs.data.max(1)[1].squeeze(1).squeeze(0).cpu().numpy()
             
-            
-            '''
-
-            mask = mask.data.cpu().numpy()
-            mask = mask.astype("int64")
-            '''
             mask = mask.data.cpu().numpy()
             mask = mask.astype("int64")
             plt.imshow(mask)
+            
+            assert np.unique(mask) == np.unique(outputs*255)
             '''
             gts_all.append(mask)
             predictions_all.append(255*outputs)
+            
+            if SAVE:
+                
+                images = "outputs"
+                labels = images+"/predictions"
+                true = images+"/labels"
+                
+                if not os.path.exists(images):
+                    os.makedirs(images)
+                if not os.path.exists(labels):
+                        os.makedirs(labels)
+                if not os.path.exists(true):
+                        os.makedirs(true)
+            
+                matplotlib.image.imsave(f"{labels}/Pred_{batch_idx}.png", outputs , cmap='gray')
+            
+                matplotlib.image.imsave(f"{true}/True_{batch_idx}.png", mask, cmap='gray')
+                    
+            
 
     #test_loss /= len(test_loader.dataset)
     loss_per_epoch = [np.average(loss_per_batch)]
@@ -411,7 +440,7 @@ cont = 0
 res_path = "./metrics_" + args.experiment_name
 
 
-filename = "unet_7_dic_DATASET_PRUEBA_1_epochs_works.pth" # my_checkpoint.pth.tar
+filename = "psplite_9_dic_lr_-4.pth" # my_checkpoint.pth.tar
 model_path = "./models" # + filename
 
 if not os.path.exists(model_path):
@@ -472,48 +501,3 @@ scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gam
 y_pred, true_pred = [], []
 
 loss_per_epoch_test, acc_val_per_epoch_i, y_pred, true_pred = testing(args, model, device, test_loader)
-
-y_pred = np.array(y_pred)
-true_pred = np.array(true_pred)
-
-print(f"y_pred sizes: {y_pred.shape} - true_pred sizes: {true_pred.shape}")
-print(f"y_pred pixel values: {np.unique(y_pred)}")
-
-store_predictions_with_patching(y_pred, true_pred, 16)
-    
-'''
-for epoch in range(1, args.epoch + 1):
-    st = time.time()
-    scheduler.step()    
-    # train for one epoch
-    print("Unet improved ==> testing, epoch " + str(epoch))
-    # test
-    loss_per_epoch_test, acc_val_per_epoch_i = testing(args, model, device, test_loader)
-
-    loss_test_epoch += loss_per_epoch_test
-    acc_test_per_epoch += [acc_val_per_epoch_i]
-
-
-    if epoch == 1:
-        best_acc_val = acc_val_per_epoch_i
-
-    else:
-        if acc_val_per_epoch_i > best_acc_val:
-            best_acc_val = acc_val_per_epoch_i
-
-
-    np.save(res_path + '/' + 'LOSS_epoch_val.npy', np.asarray(loss_test_epoch))
-
-    # save accuracies:
-    np.save(res_path + '/' + 'accuracy_per_epoch_val.npy', np.asarray(acc_test_per_epoch))
-    
-    cont += 1
-
-scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
-
-# To delete temporal files
-import shutil
-
-shutil.rmtree("outputs")
-
-'''

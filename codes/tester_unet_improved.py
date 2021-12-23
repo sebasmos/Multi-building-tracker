@@ -79,14 +79,15 @@ in_channel = 3
 num_classes = 1
 learning_rate = 1e-4
 batch_size = 1
-num_epochs = 2
-chip_dimension = 1024
+num_epochs = 1
+chip_dimension = 256
 LOAD_MODEL = True
 TRAIN = False
 TEST = False
-SAVE = True
+SAVE = False
+PREDICT = True
 # define threshold to filter weak predictions
-THRESHOLD = 0.4
+THRESHOLD = 0.5
 
 '''
 train_dir  = Path('../../DATASET/dataset_pruebas/train')
@@ -108,14 +109,14 @@ csv_file_test = Path('./registros/output_csvs_dataset_prueba/df_test_untidy.csv'
 #train_dir = Path('../../DATASET/archive/train_final')
 
 train_dir  = Path('../../DATASET/dataset_pruebas/train')
-#test_dir  = Path('../../DATASET/dataset_pruebas/validation')
-test_dir  = Path('../../DATASET/archive/val_final')
+test_dir  = Path('../../DATASET/dataset_pruebas/validation')
+#test_dir  = Path('../../DATASET/archive/val_final')
 
 #csv_file = Path('./output_csvs/df_train_untidy.csv')
 csv_file = Path('./registros/output_csvs_dataset_prueba/df_train_untidy.csv')
-#csv_file_test = Path('./registros/output_csvs_dataset_prueba/df_test_untidy.csv')
+csv_file_test = Path('./registros/output_csvs_dataset_prueba/df_test_untidy.csv')
 
-csv_file_test = Path('./output_csvs/df_test_untidy.csv')
+#csv_file_test = Path('./output_csvs/df_test_untidy.csv')
 
 root_dir  = train_dir
 
@@ -211,14 +212,30 @@ def _fast_hist(label_pred, label_true, num_classes):
         label_pred[mask], minlength=num_classes ** 2).reshape(num_classes, num_classes)
     return hist
 
-def train_SemanticSeg(args, model, device, train_loader, optimizer, epoch):
+def iou_pytorch(outputs: torch.Tensor, labels: torch.Tensor):
+    """Fast enough iou calculation function"""
+    SMOOTH = 1e-6
+    outputs = outputs.squeeze(1)  # BATCH x 1 x H x W => BATCH x H x W
+    #outputs = outputs.detach()
+    #labels = labels.detach()
+    
+    intersection = (outputs & labels).float().sum((1, 2))
+    union = (outputs | labels).float().sum((1, 2))
+    
+    iou = (intersection + SMOOTH) / (union + SMOOTH)  # We smooth our devision to avoid 0/0
+    
+    thresholded = torch.clamp(20 * (iou - 0.5), 0, 10).ceil() / 10  # This is equal to comparing with thresolds
+    
+    return thresholded.mean() # to get a batch averageimport pdb
+
+
+def train_SemanticSeg(args, model, device, train_loader, optimizer, epoch, criterion):
     # switch to train mode
     model.train()
 
     train_loss = []
     counter = 1
 
-    criterion = nn.BCEWithLogitsLoss()
     gts_all, predictions_all = [], []
 
     for batch_idx, (data) in enumerate(train_loader):
@@ -237,6 +254,8 @@ def train_SemanticSeg(args, model, device, train_loader, optimizer, epoch):
         loss = criterion(outputs, mask)
         train_loss.append(loss.item())
 
+        iou = iou_pytorch(mask.unsqueeze(0).int(), outputs.int())
+        
         # compute gradient and do SGD step
         optimizer.zero_grad()
 
@@ -249,20 +268,19 @@ def train_SemanticSeg(args, model, device, train_loader, optimizer, epoch):
                 epoch, int(counter * len(images)), len(train_loader.dataset),
                 100. * counter / len(train_loader), loss.item(),
                 optimizer.param_groups[0]['lr']))
+            print(f"Iou: {iou}")
         counter = counter + 1
         
     return sum(train_loss) / len(train_loss)#, mean_iu
         
         
-def testing(args, model, device, test_loader):
+def testing(args, model, device, test_loader, criterion):
 
     # switch to train mode
     model.eval()
     loss_per_batch = []
     test_loss = 0
-
-    ##We ignore index 255, i.e. object contours labeled with 255 in the val GT
-    criterion = nn.BCEWithLogitsLoss()
+    
     gts_all, predictions_all = [], []
     with torch.no_grad():
         for batch_idx, (data) in enumerate(test_loader):
@@ -270,17 +288,16 @@ def testing(args, model, device, test_loader):
             images = data["raster_diff"].float()
             mask = data["mask_diff"].float()#type(torch.LongTensor)
             images, mask = images.to(device), mask.to(device).squeeze()
-            
-            
             #Forward pass
             outputs = model(images).squeeze()
             #outputs = outputs.clone().detach().cpu().numpy()
     #        outputs = outputs.cpu().numpy()
             outputs = ((outputs - outputs.min())/(outputs.max()-outputs.min()))
             #outputs = np.round(outputs)
+            
             outputs[outputs>THRESHOLD] = 1 
             outputs[outputs<=THRESHOLD] = 0
-            outputs = torch.round(outputs)
+            #outputs = torch.round(outputs)
             
             #Aggregated per-pixel loss
             loss = criterion(outputs, mask)
@@ -299,6 +316,8 @@ def testing(args, model, device, test_loader):
             plt.imshow(outputs)
             np.unique(outputs)
             
+            import seaborn as sns
+            sns.histplot(data = outputs)
             
             preds = outputs.data.max(1)[1].squeeze(1).squeeze(0).cpu().numpy()
             
@@ -361,6 +380,7 @@ def testing(args, model, device, test_loader):
 
 model = UNET(in_channels=3, out_channels=1).to(device)
 
+criterion = nn.BCEWithLogitsLoss()
 print('Total params: %2.fM' % (sum(p.numel() for p in model.parameters()) / 1000000.0))
     
 milestones = args.M
@@ -382,7 +402,7 @@ cont = 0
 res_path = "./metrics_" + args.experiment_name
 
 
-filename = "unet_7_dic_DATASET_PRUEBA_1_epochs_works.pth" # my_checkpoint.pth.tar
+filename = "unet_17_dic_DATASET_PRUEBA_1_epochs_works.pth" # my_checkpoint.pth.tar
 model_path = "./models" # + filename
 
 if not os.path.exists(model_path):
@@ -402,7 +422,7 @@ for epoch in range(1, args.epoch + 1):
 
             print("Unet improved --> training, epoch " + str(epoch))
     
-            loss_per_epoch = train_SemanticSeg(args, model, device, train_loader, optimizer, epoch)
+            loss_per_epoch = train_SemanticSeg(args, model, device, train_loader, optimizer, epoch, criterion)
     
             loss_train_epoch += [loss_per_epoch]
             
@@ -415,7 +435,7 @@ for epoch in range(1, args.epoch + 1):
         if TEST:
             print("Unet improved ==> testing, epoch " + str(epoch))
             # test
-            loss_per_epoch_test, acc_val_per_epoch_i, a,b = testing(args, model, device, test_loader)
+            loss_per_epoch_test, acc_val_per_epoch_i, a,b = testing(args, model, device, test_loader, criterion)
     
             loss_test_epoch += loss_per_epoch_test
             acc_test_per_epoch += [acc_val_per_epoch_i]
@@ -440,19 +460,22 @@ scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gam
     
 # PREDICT
 
-y_pred, true_pred = [], []
+if PREDICT: 
+    
+    y_pred, true_pred = [], []
+    
+    loss_per_epoch_test, acc_val_per_epoch_i, y_pred, true_pred = testing(args, model, device, test_loader, criterion)
+    
+    y_pred = np.array(y_pred)
+    true_pred = np.array(true_pred)
+    
+    print(f"y_pred sizes: {y_pred.shape} - true_pred sizes: {true_pred.shape}")
+    print(f"y_pred pixel values: {np.unique(y_pred)}")
 
-loss_per_epoch_test, acc_val_per_epoch_i, y_pred, true_pred = testing(args, model, device, test_loader)
+    store_predictions_with_patching(y_pred, true_pred, 16)
+
 
 '''
-y_pred = np.array(y_pred)
-true_pred = np.array()
-
-print(f"y_pred sizes: {y_pred.shape} - true_pred sizes: {true_pred.shape}")
-print(f"y_pred pixel values: {np.unique(y_pred)}")
-
-store_predictions_with_patching(y_pred, true_pred, 16)
-    
 
 for epoch in range(1, args.epoch + 1):
     st = time.time()
