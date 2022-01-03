@@ -1,7 +1,7 @@
 
 #  Multi-temporal building tracker 
 
-By [Sebastian Cajas](https://www.linkedin.com/in/sebasmos777/) and [Julián Salazar] (https://www.linkedin.com/in/julian-norberto-salazar-vidal-ipcv/)
+By [Sebastian Cajas](https://www.linkedin.com/in/sebasmos777/) and [Julián Salazar](https://www.linkedin.com/in/julian-norberto-salazar-vidal-ipcv/)
 
 This repository contains the implementation of Multi-target building tracker for satellite images using deep learning.
  
