@@ -1,28 +1,8 @@
-<a href="https://github.com/sebasmos/Building.predictor">
-<img src="./.github/TRDP.png" width="450"></a>
-
-<p align="left">
-    <a href="https://www.python.org/">
-      <img src="https://img.shields.io/badge/Python-3.8-ff69b4.svg" /></a>
-    <a href= "https://pytorch.org/">
-      <img src="https://img.shields.io/badge/PyTorch-1.8-2BAF2B.svg" /></a>
-    <a href= "https://github.com/zudi-lin/pytorch_connectomics/blob/master/LICENSE">
-      <img src="https://img.shields.io/badge/License-MIT-blue.svg" /></a>
-    <a href= "https://zudi-lin.github.io/pytorch_connectomics/build/html/index.html">
-      <img src="https://img.shields.io/badge/Doc-Latest-2BAF2B.svg" /></a>
-    <a href= "https://join.slack.com/t/pytorchconnectomics/shared_invite/zt-obufj5d1-v5_NndNS5yog8vhxy4L12w">
-      <img src="https://img.shields.io/badge/Slack-Join-CC8899.svg" /></a>
-    <a href= "https://arxiv.org/abs/2112.05754">
-      <img src="https://img.shields.io/badge/arXiv-2112.05754-FF7F50.svg" /></a>
-</p>
-
-<hr/>
-
-
 <a href="https://github.com/sebasmos/Building.predictor"> 
  
- #  Multi-temporal building tracker 
-<img src="./.github/TRDP.png" width="450"></a>
+    
+<img src="./.github/TRDP.png" width="100"></a>
+ 
 
 <p align="left">
     <a href="https://www.python.org/">
