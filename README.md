@@ -1,7 +1,7 @@
 <a href="https://github.com/sebasmos/Building.predictor"> 
  
     
-<img src="./.github/TRDP.png" width="350"></a>
+<img src="./.github/TRDP.png" width="450"></a>
  
 
 <p align="left">
@@ -9,7 +9,7 @@
       <img src="https://img.shields.io/badge/Python-3.8-ff69b4.svg" /></a>
     <a href= "https://pytorch.org/">
       <img src="https://img.shields.io/badge/PyTorch-1.8-2BAF2B.svg" /></a>
-    <a href= "https://github.com/zudi-lin/pytorch_connectomics/blob/master/LICENSE">
+    <a href= "https://github.com/sebasmos/Building.predictor/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-blue.svg" /></a>
 </p>
 
@@ -33,11 +33,7 @@ A  system  for  multi-target  building  tracking  using  satellite images  has  
 
 #  Multi-temporal building tracker 
 
-<<<<<<< HEAD
-By [Sebastian Cajas](https://www.linkedin.com/in/sebasmos777/) and [Julián Salazar] (https://www.linkedin.com/in/julian-norberto-salazar-vidal-ipcv/)
-=======
 By [Sebastian Cajas](https://www.linkedin.com/in/sebasmos777/) and [Julián Salazar](https://www.linkedin.com/in/julian-norberto-salazar-vidal-ipcv/)
->>>>>>> 54c1e3843f5df8f85d93af9fd6d892178fe4152f
 
 This repository contains the implementation of Multi-target building tracker for satellite images using deep learning.
  
