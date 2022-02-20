@@ -60,8 +60,8 @@ conda install pytorch torchvision cudatoolkit=11.1 -c pytorch -c nvidia
 Download and install the package:
 
 ```shell
-https://github.com/sebasmos/Building.predictor.git
-cd Building.predictor
+https://github.com/sebasmos/Multi-building-tracker.git
+cd Multi-building-tracker
 pip install --upgrade pip
 pip install -U albumentations
 pip install patchify
