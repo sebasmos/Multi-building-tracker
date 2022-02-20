@@ -1,7 +1,7 @@
 <a href="https://github.com/sebasmos/Building.predictor"> 
  
     
-<img src="./.github/TRDP.png" width="450"></a>
+<img src="./.github/TRDP.png" width="550"></a>
  
 
 <p align="left">
