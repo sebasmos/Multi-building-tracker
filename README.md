@@ -24,7 +24,7 @@ This repository contains the implementation of Multi-target building tracker for
 
 **Supervisor**: Fabien Baldacci
 
-**Report**: [Download](https://drive.google.com/file/d/1Rbc202UVYKSnIZx3vauio32_Ty-SJmIy/view?usp=sharing)
+**Report**: [Download](https://drive.google.com/file/d/1dytXRhjk3wIuqjNQ9rs0ukJLhGslj5AG/view?usp=sharing)
 
 <hr/>
 
@@ -66,6 +66,13 @@ pip install --upgrade pip
 pip install -U albumentations
 pip install patchify
 ```
+<hr/>
+
+## Datasets 
+
+1. Training data [download](https://drive.google.com/drive/folders/1VrNtC48kYpMFgNIscw_g3bM6K_VjZkIY?usp=sharing)
+1. Testing data [download](https://drive.google.com/drive/folders/1ijxwQH5cpihxXFvj4eMavDjNUMDpX2vf?usp=sharing)
+
 
 <hr/>
 
@@ -161,6 +168,6 @@ This project is licensed under the MIT License and the copyright belongs to Seba
 
 ## Citation
 
-For a detailed description of our framework, please read this [technical report](https://drive.google.com/file/d/1Rbc202UVYKSnIZx3vauio32_Ty-SJmIy/view?usp=sharing).
+For a detailed description of our framework, please read this [technical report](https://drive.google.com/file/d/1dytXRhjk3wIuqjNQ9rs0ukJLhGslj5AG/view?usp=sharing).
 
 
