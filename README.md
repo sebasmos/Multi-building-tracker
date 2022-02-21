@@ -80,7 +80,7 @@ pip install patchify
 
 <div align="justify">
  <p>
-The  data  augmentation  performed  in  the  scope  of  this project  can  be  grouped  into  two  categories:  color  augmen-tations  and  geometrical  augmentations.  Both  contribute  to alleviate the small size of the dataset, but color augmentationsare specifically intended to add generalization ability regardingthe high  variability in the  vegetation due to  the geographical differences  and  seasonal  changes.  The  processing  outline  for the two types of augmentations is the same: the whole dataset is  traversed,  and  each  augmentation  is  applied  to  an  image with a probability of 20%
+The  data  augmentation  performed  in  the  scope  of  this project  can  be  grouped  into  two  categories:  color  augmen-tations  and  geometrical  augmentations.  Both  contribute  to alleviate the small size of the dataset, but color augmentationsare specifically intended to add generalization ability regarding the high  variability in the  vegetation due to  the geographical differences  and  seasonal  changes.  The  processing  outline  for the two types of augmentations is the same: the whole dataset is  traversed,  and  each  augmentation  is  applied  to  an  image with a probability of 20%
  </p></div>
 
 <img src="https://github.com/sebasmos/Building.predictor/blob/main/Media/augmented.gif" width="400" height="400" />
@@ -99,7 +99,7 @@ Types of augmentation using *Albumentations* package and customized augmetation:
 
 ## Patching
 
-Considering this, the  training  images  were  split  into  smaller  pieces  that  arefed into the network individually, since these are independentand contain by themselves enough information to represent anurban  area.  At  the  end,  the  patch’s  size  was  set  to  256x256.Given that the images are originally 1023x1023 pixels, it wasnecessary to add zero padding to guarantee an exact divisionby 256.
+Considering this, the  training  images  were  split  into  smaller  pieces  that  arefed into the network individually, since these are independentand contain by themselves enough information to represent an urban  area.  At  the  end,  the  patch’s  size  was  set  to  256x256.Given that the images are originally 1023x1023 pixels, it was necessary to add zero padding to guarantee an exact divisionby 256.
 
 ![](https://github.com/sebasmos/Building.predictor/blob/main/Media/patching_imgs.gif)
 ![](https://github.com/sebasmos/Building.predictor/blob/main/Media/patching_mask.gif)
@@ -130,7 +130,7 @@ UNET  with  transfer  learning  was selected for the best results in three scena
 
 
 <div align="justify"><p>
-The problem previously stated corresponds exactly to a data assignment problem. To solve it, the Hungarian Algorithm is used (sometimes referred as Munkres or Kuhn-Munkres algorithm). It is a strategy frequently employed in multiple object tracking systems [12] to find the optimal assignment between "workers" and "tasks" (in this case between the buildings detected in step $t$ and those detected in step t+1) by minimizing a cost matrix. It has been proven that the algorithm solves the problem in a polynomial time, which is fast enough for the intended application. 
+The problem previously stated corresponds exactly to a data assignment problem. To solve it, the Hungarian Algorithm is used (sometimes referred as Munkres or Kuhn-Munkres algorithm). It is a strategy frequently employed in multiple object tracking systems [12] to find the optimal assignment between "workers" and "tasks" (in this case between the buildings detected in step t and those detected in step t+1) by minimizing a cost matrix. It has been proven that the algorithm solves the problem in a polynomial time, which is fast enough for the intended application. 
  </p></div>
 The process can be summarized as follows: 
 
@@ -138,7 +138,7 @@ The process can be summarized as follows:
     
     * Assign initial labels for the footprints in step t=0.
     
-    * Compare each footprint in $t$ with each footprint in t+1, using Intersection Over Union (IOU) as the comparison criterion. 
+    * Compare each footprint in t with each footprint in t+1, using Intersection Over Union (IoU) as the comparison criterion. 
     
     * Compute the cost by subtracting the IOU from 1. This way, if the IOU between a pair of footprints is large enough, the cost of assignment will be very small.
 
